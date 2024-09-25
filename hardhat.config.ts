@@ -2,48 +2,38 @@ import "@nomicfoundation/hardhat-ethers"
 import "@nomicfoundation/hardhat-foundry"
 import "@nomicfoundation/hardhat-verify"
 import "@tenderly/hardhat-tenderly"
-import { TenderlyConfig } from "@tenderly/hardhat-tenderly/dist/tenderly/types"
-import * as tdly from "@tenderly/hardhat-tenderly" // also import tdly for setup, in addition to global import above
+import * as tdly from "@tenderly/hardhat-tenderly"
 import "@typechain/hardhat"
-// import "@openzeppelin/hardhat-upgrades"
 import "hardhat-gas-reporter"
 import "hardhat-deploy"
-import { HardhatConfig, HardhatUserConfig } from "hardhat/types"
-import "hardhat-contract-sizer" // npx hardhat size-contracts
+import { HardhatUserConfig } from "hardhat/types"
+import "hardhat-contract-sizer"
 import "solidity-coverage"
 import "solidity-docgen"
+import dotenv from "dotenv";
 
-require("dotenv").config()
+dotenv.config();
 
-//
-// NOTE:
-// To load the correct .env, you must run this at the root folder (where hardhat.config is located)
-//
-const MAINNET_URL = process.env.MAINNET_URL || "https://eth-mainnet"
-const MAINNET_PRIVATEKEY = process.env.MAINNET_PRIVATEKEY || "0xkey"
-const SEPOLIA_URL = process.env.SEPOLIA_URL || "https://eth-sepolia"
-const SEPOLIA_PRIVATEKEY = process.env.SEPOLIA_PRIVATEKEY || "0xkey"
-const TENDERLY_URL = process.env.TENDERLY_URL || "https://eth-tenderly"
-const TENDERLY_PRIVATEKEY = process.env.TENDERLY_PRIVATEKEY || "0xkey"
-const USE_TENDERLY = process.env.USE_TENDERLY === "true"
-
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "key"
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "key"
+const {
+  MAINNET_URL = "https://eth-mainnet",
+  MAINNET_PRIVATEKEY = "0xkey",
+  SEPOLIA_URL = "https://eth-sepolia",
+  SEPOLIA_PRIVATEKEY = "0xkey",
+  TENDERLY_URL = "https://eth-tenderly",
+  TENDERLY_PRIVATEKEY = "0xkey",
+  USE_TENDERLY = process.env.USE_TENDERLY === "true",
+  ETHERSCAN_API_KEY = "key",
+  COINMARKETCAP_API_KEY = "key",
+} = process.env;
 
 if (USE_TENDERLY) {
-  tdly.setup({
-    automaticVerifications: true,
-  })
+  tdly.setup({ automaticVerifications: true });
 }
 
-/** @type import('hardhat/config').HardhatUserConfig */
+/** @type {import('hardhat/config').HardhatUserConfig} */
 const config: HardhatUserConfig = {
   solidity: {
-    compilers: [
-      {
-        version: "0.8.23",
-      },
-    ],
+    compilers: [{ version: "0.8.23" }],
     settings: {
       optimizer: {
         enabled: true,
@@ -59,39 +49,29 @@ const config: HardhatUserConfig = {
   },
   defaultNetwork: "tenderly",
   networks: {
-    hardhat: {
-      chainId: 31337,
-    },
+    hardhat: { chainId: 31337 },
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545/",
     },
     mainnet: {
       chainId: 1,
-      url: MAINNET_URL || "",
+      url: MAINNET_URL,
       accounts: [MAINNET_PRIVATEKEY],
     },
-    ...(USE_TENDERLY
-      ? {
-          tenderly: {
-            chainId: 11155111,
-            url: TENDERLY_URL || "",
-            accounts: [TENDERLY_PRIVATEKEY],
-          },
-        }
-      : {
-          sepolia: {
-            chainId: 11155111,
-            url: SEPOLIA_URL || "",
-            accounts: [SEPOLIA_PRIVATEKEY],
-          },
-        }),
+    tenderly: USE_TENDERLY ? {
+      chainId: 11155111,
+      url: TENDERLY_URL,
+      accounts: [TENDERLY_PRIVATEKEY],
+    } : undefined,
+    sepolia: !USE_TENDERLY ? {
+      chainId: 11155111,
+      url: SEPOLIA_URL,
+      accounts: [SEPOLIA_PRIVATEKEY],
+    } : undefined,
   },
-  // @ts-ignore
   namedAccounts: {
-    deployer: {
-      default: 0, // here this will by default take the first account as deployer
-    },
+    deployer: { default: 0 },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -100,21 +80,8 @@ const config: HardhatUserConfig = {
     currency: "USD",
     coinmarketcap: COINMARKETCAP_API_KEY,
   },
-  mocha: {
-    timeout: 20_000,
-  },
-  etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
-  },
-  ...(USE_TENDERLY
-    ? {
-        tenderly: {
-          project: process.env.TENDERLY_PROJECT_SLUG || "",
-          username: process.env.TENDERLY_USERNAME || "",
-          privateVerification: process.env.TENDERLY_PRIVATE_VERIFICATION === "true",
-        } as TenderlyConfig,
-      }
-    : {}),
+  mocha: { timeout: 20_000 },
+  etherscan: { apiKey: ETHERSCAN_API_KEY },
   typechain: {
     outDir: "typechain",
     target: "ethers-v6",
@@ -123,6 +90,6 @@ const config: HardhatUserConfig = {
     outputDir: "./docs",
     pages: "files"
   }
-}
+};
 
-export default config
+export default config;
